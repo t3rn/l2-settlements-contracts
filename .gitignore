@@ -1,0 +1,25 @@
+.DS_Store
+node_modules
+.env
+.idea
+.envrc.local
+
+coverage
+coverage.json
+typechain
+typechain-types
+
+# Hardhat files
+cache
+artifacts
+
+# TypeScript files
+dist
+test/**/*.d.ts
+test/**/*.js.map
+# this one is temporary, until all .js test files are moved to .ts
+test/services/**/*.js
+src/test.ts
+
+bin
+.vscode/launch.json

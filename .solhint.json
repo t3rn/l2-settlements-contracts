@@ -1,0 +1,9 @@
+{
+  "extends": "solhint:recommended",
+  "rules": {
+    "max-line-length": ["warn", 200],
+    "avoid-suicide": "error",
+    "avoid-sha3": "warn",
+    "no-global-import": "off"
+  }
+}
