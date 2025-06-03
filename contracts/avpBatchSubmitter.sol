@@ -201,7 +201,7 @@ contract avpBatchSubmitter is AccessControlUpgradeable {
                 batch.asset,
                 batch.target,
                 msg.sender,
-                99, // Do not emit event another time
+                6,
                 bytes32(0)
             );
             if (batch.asset == address(0)) {

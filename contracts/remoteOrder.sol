@@ -468,16 +468,16 @@ contract RemoteOrder is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
         uint8 GMPAction,
         bytes32 orderId
     ) public payable onlyOperator {
-        settlePayoutWithFees(amount, asset, beneficiary, sender);
         if (GMPAction == 0) {
+            settlePayoutWithFees(amount, asset, beneficiary, sender);
             emit Claimed(orderId, beneficiary, 0, asset);
         }
         if (GMPAction == 1) {
+            settlePayoutWithFees(amount, asset, beneficiary, sender);
             emit ClaimedRefund(orderId, beneficiary, amount, asset);
         }
         if (GMPAction == 6) {
-            bytes32 confirmationId = keccak256(abi.encode(orderId, beneficiary, amount, asset, sender));
-            emit Confirmation(orderId, beneficiary, amount, asset, sender, confirmationId, block.timestamp);
+            settleNativeOrToken(amount, asset, beneficiary, sender);
         }
     }
 
