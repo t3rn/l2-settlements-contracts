@@ -190,14 +190,6 @@ contract AttestationsVerifierProofs is AccessControlUpgradeable {
         return keccak256(abi.encodePacked(keccak256(messageGMPPayload), sourceGateway, sourceHeight));
     }
 
-    function overrideCommitteeHash(bytes32 newCommitteeHash) public onlyOwner {
-        currentCommitteeHash = newCommitteeHash;
-    }
-
-    function overrideNextCommitteeHash(bytes32 newCommitteeHash) public onlyOwner {
-        nextCommitteeHash = newCommitteeHash;
-    }
-
     function overrideCurrentBatchIndex(uint256 newBatchIndex) public onlyOwner {
         currentBatchIndex = newBatchIndex;
     }

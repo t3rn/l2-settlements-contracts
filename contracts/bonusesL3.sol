@@ -150,7 +150,8 @@ contract BonusesL3 is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
         }
 
         // Adjust the base reward based on transaction count and supply remaining
-        uint256 baseReward = ((currentWeeklySupply / readWeeklyTarget()) * (100 - slowdownFactor) * timeFactor) / (100 * 100);
+        uint256 baseReward = ((currentWeeklySupply / readWeeklyTarget()) * (100 - slowdownFactor) * timeFactor) /
+            (100 * 100);
 
         // Ensure we don't return a zero or excessively low reward
         uint256 minReward = readMaxSingleReward() / 20;
