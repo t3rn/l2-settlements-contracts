@@ -365,7 +365,7 @@ contract AttestationsVerifierProofs is AccessControlUpgradeable {
                 }
                 offset += 32;
             } else if (opType == uint8(OperationType.EscrowCommitApplied)) {
-                if (payload.length >= offset + 32) {
+                if (payload.length >= offset + 52) {
                     bytes32 orderId = bytes32(payload[offset:offset + 32]);
                     if (orderId != bytes32(0)) {
                         address destination = address(bytes20(payload[offset + 32:offset + 52]));
@@ -378,7 +378,7 @@ contract AttestationsVerifierProofs is AccessControlUpgradeable {
                         }
                     }
                 }
-                offset += 32;
+                offset += 52;
             } else {
                 return false;
             }
