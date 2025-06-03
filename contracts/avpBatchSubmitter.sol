@@ -123,22 +123,6 @@ contract avpBatchSubmitter is AccessControlUpgradeable {
         }
     }
 
-    function backdoorBatchHashMulti(
-        bytes32[] calldata batchHash,
-        uint256[] calldata indices,
-        uint256[] calldata batcherVersions
-    ) public onlyOwnerOrOperator {
-        for (uint256 i = 0; i < batchHash.length; ++i) {
-            avp.backdoorBatchHash(batchHash[i]);
-            if (indices[i] > highestIndexBackdoor[batcherVersions[i]]) {
-                highestIndexBackdoor[batcherVersions[i]] = indices[i];
-            }
-            if (indices[i] < lowestIndexBackdoor[batcherVersions[i]]) {
-                lowestIndexBackdoor[batcherVersions[i]] = indices[i];
-            }
-        }
-    }
-
     function confirmBatchOrdersV3(RemoteOrder.ConfirmBatchOrderEntry calldata entries) public payable returns (bool) {
         uint256 gasStart = gasleft();
         // Iterate over ids

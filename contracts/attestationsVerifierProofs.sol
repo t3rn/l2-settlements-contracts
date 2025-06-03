@@ -298,10 +298,6 @@ contract AttestationsVerifierProofs is AccessControlUpgradeable {
         emit BatchProcessingError(batchMessageHash, msg.sender, batch.index);
     }
 
-    function backdoorBatchHash(bytes32 batchHash) public onlyOwnerOrOperator {
-        committedGMPMessagesMap[batchHash] = true;
-    }
-
     // Check if attestation is applied
     function isAttestationApplied(bytes32 id) public view returns (bool) {
         return committedGMPMessagesMap[id];
