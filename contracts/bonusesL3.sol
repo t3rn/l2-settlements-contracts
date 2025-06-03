@@ -123,7 +123,7 @@ contract BonusesL3 is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
     **/
     function readCurrentBaseReward() public view returns (uint256) {
         if (leftThisWeek < readMaxSingleReward()) {
-            return readMaxSingleReward() / 100; // Minimum threshold
+            return readMaxSingleReward() / 20; // Minimum threshold
         }
 
         uint256 currentWeeklyTarget = readWeeklyTarget();
@@ -150,12 +150,17 @@ contract BonusesL3 is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
         }
 
         // Adjust the base reward based on transaction count and supply remaining
-        uint256 baseReward = ((currentWeeklySupply / weeklyTarget) * (100 - slowdownFactor) * timeFactor) / (100 * 100);
+        uint256 baseReward = ((currentWeeklySupply / readWeeklyTarget()) * (100 - slowdownFactor) * timeFactor) / (100 * 100);
 
         // Ensure we don't return a zero or excessively low reward
-        uint256 minReward = readMaxSingleReward() / 100;
+        uint256 minReward = readMaxSingleReward() / 20;
         if (baseReward < minReward) {
             return minReward;
+        }
+
+        // Ensure we don't exceed the max single reward
+        if (baseReward > readMaxSingleReward()) {
+            return readMaxSingleReward();
         }
 
         return baseReward;

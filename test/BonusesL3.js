@@ -39,7 +39,7 @@ describe('BonusesL3', () => {
       const _distributedResult = await BonusesL3.applyBonusFromBid(ASSET_ZERO_CODE, AMOUNT_ZERO, RANDOM_BENEFICIARY)
       const initialRewardPerCurrentRate = await BonusesL3.readCurrentBaseReward()
       expect(initialRewardPerCurrentRate.toString()).to.equal(
-        ethers.utils.parseEther('0.035714285714285714').toString(),
+        ethers.utils.parseEther('0.070714185704081632').toString(),
       )
     })
 
@@ -47,20 +47,20 @@ describe('BonusesL3', () => {
       const _distributedResult1 = await BonusesL3.applyBonusFromBid(ASSET_ZERO_CODE, AMOUNT_ZERO, RANDOM_BENEFICIARY)
       const initialRewardPerCurrentRate = await BonusesL3.readCurrentBaseReward()
       expect(initialRewardPerCurrentRate.toString()).to.equal(
-        ethers.utils.parseEther('0.035714285714285714').toString(),
+        ethers.utils.parseEther('0.070714185704081632').toString(),
       )
       const amount100 = ethers.utils.parseEther('100')
       const _distributedResult2 = await BonusesL3.applyBonusFromBid(ASSET_ZERO_CODE, amount100, RANDOM_BENEFICIARY)
       const higherRewardPerCurrentRate = await BonusesL3.readCurrentBaseReward()
-      expect(higherRewardPerCurrentRate.toString()).to.equal(ethers.utils.parseEther('0.047619047619047618').toString())
+      expect(higherRewardPerCurrentRate.toString()).to.equal(ethers.utils.parseEther('0.070714085694018993').toString())
     })
 
-    it('should increase next bonuses based on 1 TPS', async () => {
-      let previousReward = 0
+    it('should increase next bonuses based on 1 TPS vs 700k weekly target', async () => {
+      let previousReward = ethers.utils.parseEther('1')
       for (let index = 0; index < 100; index++) {
         const _distributedResult = await BonusesL3.applyBonusFromBid(ASSET_ZERO_CODE, AMOUNT_ZERO, RANDOM_BENEFICIARY)
         const nextRewardPerCurrentRate = await BonusesL3.readCurrentBaseReward()
-        expect(previousReward).to.be.lessThanOrEqual(nextRewardPerCurrentRate)
+        expect(nextRewardPerCurrentRate).to.be.lessThanOrEqual(previousReward)
         previousReward = nextRewardPerCurrentRate
       }
     })
