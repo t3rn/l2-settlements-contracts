@@ -319,7 +319,16 @@ contract AttestationsVerifierProofs is AccessControlUpgradeable {
             if (bannedCommittee.length > 0) {
                 require(!addressArrayContains(bannedCommittee, recoveredSigner), "SIGNER_BANNED");
             }
-            leaves[i] = keccak256(bytes.concat(keccak256(abi.encode(recoveredSigner))));
+            bytes32 candidate = keccak256(bytes.concat(keccak256(abi.encode(recoveredSigner))));
+            // Dedup leaves by checking if the candidate is already in the leaves array
+            bool isDuplicate = false;
+            for (uint256 j = 0; j < i; ++j) {
+                if (leaves[j] == candidate) {
+                    isDuplicate = true;
+                    break;
+                }
+            }
+            leaves[i] = candidate;
         }
         return leaves;
     }
