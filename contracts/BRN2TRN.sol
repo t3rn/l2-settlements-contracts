@@ -41,6 +41,11 @@ contract BRN2TRN is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
         __ReentrancyGuard_init();
     }
 
+    function setWhitelistedRatio(uint256 _ratio) external onlyOwner {
+        require(_ratio > 0, "ratio = 0");
+        BRN2TRNWhitelistedRatio = _ratio;
+    }
+
     receive() external payable {}
 
     fallback() external payable {}
