@@ -4,7 +4,7 @@ pragma solidity 0.8.24;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-contract tSOL is ERC20, Ownable {
+contract t3SOL is ERC20, Ownable {
     constructor(address _owner, string memory name, string memory symbol) ERC20(name, symbol) {
         // Prevent fat fingers
         require(_owner != address(0), "Owner address cannot be zero");
