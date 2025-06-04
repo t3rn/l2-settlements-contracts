@@ -301,6 +301,7 @@ contract AttestationsVerifierProofs is AccessControlUpgradeable {
         address[] memory bannedCommittee
     ) public pure returns (bytes32[] memory) {
         bytes32[] memory leaves = new bytes32[](signatures.length);
+        uint256 uniqueCount = 0;
         for (uint256 i = 0; i < signatures.length; ++i) {
             address recoveredSigner = recoverSigner(expectedBatchHash, signatures[i]);
             require(recoveredSigner != address(0), "BAD_SIGNATURE");
@@ -316,7 +317,15 @@ contract AttestationsVerifierProofs is AccessControlUpgradeable {
                     break;
                 }
             }
+            if (isDuplicate) {
+                continue; // Skip adding duplicate leaves
+            }
+            uniqueCount++;
             leaves[i] = candidate;
+        }
+        // Trim the leaves array to the actual number of unique leaves
+        assembly {
+            mstore(leaves, uniqueCount)
         }
         return leaves;
     }
