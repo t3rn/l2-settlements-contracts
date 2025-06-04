@@ -6,6 +6,8 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract t3TIA is ERC20, Ownable {
     constructor(address _owner, string memory name, string memory symbol) ERC20(name, symbol) {
+        // Prevent fat fingers
+        require(_owner != address(0), "Owner address cannot be zero");
         // Transfer ownership to the provided _owner address
         _transferOwnership(_owner);
     }
