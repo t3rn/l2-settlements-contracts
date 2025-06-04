@@ -194,7 +194,6 @@ contract RemoteOrder is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
             rpsCount = 0;
             rpsTimestamp = block.timestamp;
         }
-        rpsCount++;
         return rpsCount <= _rpsMax;
     }
 
@@ -265,7 +264,7 @@ contract RemoteOrder is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
             require(msg.value == 0, "RO#7");
             IERC20(rewardAsset).safeTransferFrom(msg.sender, address(this), maxReward);
         }
-
+        rpsCount++;
         require(
             escrowGMP.storeRemoteOrderPayload(id, keccak256(abi.encode(rewardAsset, maxReward, block.timestamp))),
             "RO#0"
