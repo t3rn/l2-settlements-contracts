@@ -476,7 +476,7 @@ contract RemoteOrder is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
             emit ClaimedRefund(orderId, beneficiary, amount, asset);
         }
         if (GMPAction == 6) {
-            settleNativeOrToken(amount, asset, beneficiary, sender);
+            require(settleNativeOrToken(amount, asset, beneficiary, sender), "RO#2"); // Settle the full amount without fees
         }
     }
 
