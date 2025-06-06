@@ -385,7 +385,19 @@ contract RemoteOrder is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
         bytes memory _batchPayload
     ) public payable isEgressOn {
         bytes32 orderId = generateId(msg.sender, orderNonce);
-        require(claimerGMP.isClaimable(_batchPayloadHash, _batchPayload, orderId, msg.sender, maxReward, 1), "RO#1");
+        require(
+            claimerGMP.checkIsRefundable(
+                orderId,
+                orderTimestamp,
+                executionCutOff,
+                rewardAsset,
+                maxReward,
+                msg.sender,
+                _batchPayloadHash,
+                _batchPayload
+            ),
+            "RO#1"
+        );
         escrowGMP.twoifyPayloadHash(orderId);
         require(settleNativeOrToken(maxReward, rewardAsset, msg.sender, address(this)), "RO#2");
         emit ClaimedRefund(orderId, msg.sender, maxReward, rewardAsset);
