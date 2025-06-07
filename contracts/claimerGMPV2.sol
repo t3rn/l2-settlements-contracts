@@ -276,7 +276,7 @@ contract ClaimerGMPV2 is AccessControlUpgradeable {
         RemoteOrder.Payout[] memory payouts,
         bytes32 _batchPayloadHash,
         bytes memory _batchPayload
-    ) public payable returns (address[] memory, uint256[] memory, uint256) {
+    ) public returns (address[] memory, uint256[] memory, uint256) {
         address[] memory rewardAssets = new address[](payouts.length);
         uint256[] memory rewardAmounts = new uint256[](payouts.length);
         uint256 rewardAssetCount = 0;

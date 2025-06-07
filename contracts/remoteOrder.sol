@@ -311,6 +311,10 @@ contract RemoteOrder is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
             revert("RO#2");
         }
 
+        if (asset == address(0)) {
+            require(msg.value == amount, "RO#2");
+        }
+
         if (id != generateIdFull(sourceAccount, nonce, source)) {
             revert("RO#7");
         }
@@ -383,7 +387,7 @@ contract RemoteOrder is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
         uint256 orderTimestamp,
         bytes32 _batchPayloadHash,
         bytes memory _batchPayload
-    ) public payable isEgressOn {
+    ) public isEgressOn {
         bytes32 orderId = generateId(msg.sender, orderNonce);
         require(
             claimerGMP.checkIsRefundable(
