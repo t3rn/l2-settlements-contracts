@@ -263,6 +263,7 @@ contract RemoteOrder is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
         if (rewardAsset == address(0)) {
             require(msg.value == maxReward, "RO#7");
         } else {
+            require(supportedAssets[rewardAsset] != 0, "RO#1");
             // Verify msg.value is 0 for non-native orders
             require(msg.value == 0, "RO#7");
             IERC20(rewardAsset).safeTransferFrom(msg.sender, address(this), maxReward);
@@ -440,7 +441,7 @@ contract RemoteOrder is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
                 _batchPayloadHash,
                 _batchPayload
             ),
-            "RO#13"
+            "RO#1"
         );
         escrowGMP.oneifyPayloadHash(orderId);
         if (settledAmount == 0) {
@@ -474,7 +475,7 @@ contract RemoteOrder is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
             fees = amount;
         }
         protocolFeesAccrued[asset] += fees;
-        require(settleNativeOrToken(amount - fees, asset, beneficiary, sender), "RO#16");
+        require(settleNativeOrToken(amount - fees, asset, beneficiary, sender), "RO#7");
     }
 
     function settlePayoutWithFeesCall(
