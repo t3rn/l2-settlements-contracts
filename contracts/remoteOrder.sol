@@ -513,11 +513,12 @@ contract RemoteOrder is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
             }
             return success;
         }
+        // Assume both below to revert on failure
         if (sender == address(this)) {
-            IERC20(asset).transfer(beneficiary, amount);
-            return true;
+            IERC20(asset).safeTransfer(beneficiary, amount);
+        } else {
+            IERC20(asset).safeTransferFrom(sender, beneficiary, amount);
         }
-        IERC20(asset).safeTransferFrom(sender, beneficiary, amount);
         return true;
     }
 
@@ -526,7 +527,7 @@ contract RemoteOrder is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
         uint256 amount,
         address beneficiary
     ) external onlyOwnerOrFeeCollector isEgressOn {
-        if (beneficiary == protocolFeesCollector) {
+        if (msg.sender == protocolFeesCollector) {
             protocolFeesAccrued[asset] -= amount;
         }
         require(settleNativeOrToken(amount, asset, beneficiary, address(this)), "RO#2");
