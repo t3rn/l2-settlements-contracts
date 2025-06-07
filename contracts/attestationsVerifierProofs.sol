@@ -360,6 +360,8 @@ contract AttestationsVerifierProofs is AccessControlUpgradeable {
                             escrowGMP.signalOrderGMPMismatch(orderId, address(0));
                         }
                     }
+                } else {
+                    return false; // Invalid payload length for TransferCommit
                 }
                 offset += 52;
             } else if (opType == uint8(OperationType.TransferRevert)) {
@@ -368,6 +370,8 @@ contract AttestationsVerifierProofs is AccessControlUpgradeable {
                     if (orderId != bytes32(0)) {
                         emit TransferRevertApplied(orderId);
                     }
+                } else {
+                    return false; // Invalid payload length for TransferRevert
                 }
                 offset += 32;
             } else if (opType == uint8(OperationType.EscrowCommitApplied)) {
@@ -383,6 +387,8 @@ contract AttestationsVerifierProofs is AccessControlUpgradeable {
                             escrowGMP.signalOrderGMPMismatch(orderId, address(0));
                         }
                     }
+                } else {
+                    return false; // Invalid payload length for EscrowCommitApplied
                 }
                 offset += 52;
             } else {
