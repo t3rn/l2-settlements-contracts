@@ -54,6 +54,7 @@ contract TRNInflation is AccessControlUpgradeable {
 
     function setInflationOn() public onlyOwner {
         isInflationOn = true;
+        lastInflationTime = block.timestamp;
     }
 
     function setInflationOff() public onlyOwner {
