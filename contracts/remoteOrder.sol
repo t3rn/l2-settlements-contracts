@@ -253,6 +253,9 @@ contract RemoteOrder is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
         uint256 startGasConsumed = gasleft();
         uint32 nonce = uint32(block.timestamp);
         bytes32 id = generateId(msg.sender, nonce);
+        if (rpsMax > 0) {
+            rpsCount++;
+        }
         require(ensureRPSInTact(), "RO#7");
         require(ensureDestAssetIsSupported(asset, destination), "RO#1");
         require(destination != sourceId);
@@ -264,7 +267,6 @@ contract RemoteOrder is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
             require(msg.value == 0, "RO#7");
             IERC20(rewardAsset).safeTransferFrom(msg.sender, address(this), maxReward);
         }
-        rpsCount++;
         require(
             escrowGMP.storeRemoteOrderPayload(id, keccak256(abi.encode(rewardAsset, maxReward, block.timestamp))),
             "RO#0"
