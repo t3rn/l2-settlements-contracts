@@ -54,7 +54,6 @@
     "@polkadot/api": "^10.13.1",
     "@sentry/node": "^7.111.0",
     "@sentry/profiling-node": "^7.111.0",
-    "@t3rn/pricer": "1.7.9",
     "axios": "^1.6.8",
     "cors": "^2.8.5",
     "crypto-convert": "^2.1.7",
