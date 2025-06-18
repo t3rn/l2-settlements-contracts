@@ -320,8 +320,8 @@ contract AttestationsVerifierProofs is AccessControlUpgradeable {
             if (isDuplicate) {
                 continue; // Skip adding duplicate leaves
             }
+            leaves[uniqueCount] = candidate;
             uniqueCount++;
-            leaves[i] = candidate;
         }
         // Trim the leaves array to the actual number of unique leaves
         assembly {
