@@ -231,9 +231,14 @@ contract RemoteOrder is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
         supportedNetworks[_network] = _supported;
     }
 
-    function addSupportedBridgeAsset(address assetHere, uint32 assetThere, bool _supported) public onlyOwnerOrOperator {
+    function addSupportedBridgeAsset(
+        address assetHere,
+        uint32 assetThere,
+        bool _supported,
+        bool _supportedDest
+    ) public onlyOwnerOrOperator {
         supportedAssets[assetHere] = assetThere;
-        supportedDestAssets[assetThere] = _supported;
+        supportedDestAssets[assetThere] = _supportedDest;
     }
 
     /*

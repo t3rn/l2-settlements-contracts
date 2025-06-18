@@ -107,7 +107,7 @@ describe('RemoteOrder', function () {
     const encodedEncodedNetworkId = encodeNetworkId('sept')
     await contract.setSourceId(encodedEncodedNetworkId)
     await contract.addSupportedNetwork('0x03030303', true)
-    await contract.addSupportedBridgeAsset('0x0000000000000000000000000000000000000005', 5555, true)
+    await contract.addSupportedBridgeAsset('0x0000000000000000000000000000000000000005', 5555, true, true)
 
     await contract.assignClaimerGMP(claimerGMPContract.address)
 
@@ -218,7 +218,7 @@ describe('RemoteOrder', function () {
       let params = await getParams()
 
       // add to asset balance
-      expect(await contract.addSupportedBridgeAsset(params.rewardAssetUSDC, 5555, true)).to.be.ok
+      expect(await contract.addSupportedBridgeAsset(params.rewardAssetUSDC, 5555, true, true)).to.be.ok
 
       // send order with USDC as rewardAsset
       await contract
