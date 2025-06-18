@@ -185,6 +185,8 @@ contract BonusesL3 is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
         uint256 finalReward = reward + bonus;
         if (finalReward < leftThisWeek) {
             leftThisWeek -= finalReward;
+        } else {
+            return false; // Not enough balance left for this reward
         }
         _updateAssetAverage(assetId, amount);
 
