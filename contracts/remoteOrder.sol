@@ -326,7 +326,7 @@ contract RemoteOrder is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
         }
 
         bytes32 confirmationId = keccak256(abi.encode(id, target, amount, asset, msg.sender));
-        bytes32 orderConfirmationId = keccak256(abi.encode(id, target, amount, asset));
+        bytes32 orderConfirmationId = keccak256(abi.encode(id, target, asset));
 
         // First, check if the order is already confirmed
         if (orderPayloads[confirmationId] != bytes32(0)) {
