@@ -182,8 +182,11 @@ contract ClaimerGMPV2 is AccessControlUpgradeable {
             return false;
         }
         bytes32 paymentPayloadHash = keccak256(abi.encode(rewardAsset, maxReward, orderTimestamp));
-        bytes32 paymentHash = escrowGMP.getRemotePaymentPayloadHash(orderId);
-        return paymentHash == paymentPayloadHash;
+        if (!attesters.skipEscrowWrites()) {
+            // As per the escrowGMP revertRemoteOrderPayload, attesters would revert the order payload back to the sender by re-hashing with address(0)
+            paymentPayloadHash = keccak256(abi.encode(paymentPayloadHash, address(0)));
+        }
+        return escrowGMP.getRemotePaymentPayloadHash(orderId) == paymentPayloadHash;
     }
 
     function checkIsRefundable(
@@ -196,10 +199,15 @@ contract ClaimerGMPV2 is AccessControlUpgradeable {
         bytes32 _batchPayloadHash,
         bytes memory _batchPayload
     ) public view returns (bool) {
-        if (checkIsRefundableWithEscrow(orderId, orderTimestamp, orderTimeout, rewardAsset, maxReward, beneficiary)) {
-            return true;
+        bytes32 paymentHash = escrowGMP.getRemotePaymentPayloadHash(orderId);
+        if (paymentHash == bytes32(0) || paymentHash == bytes32(uint256(1)) || paymentHash == bytes32(uint256(2))) {
+            return false;
         }
-        if (attesters.skipEscrowWrites() || forceCheckV2) {
+        require(
+            checkIsRefundableWithEscrow(orderId, orderTimestamp, orderTimeout, rewardAsset, maxReward, beneficiary),
+            "RO#14"
+        );
+        if (forceCheckV2) {
             uint8 actionType = 1;
             return isClaimable(_batchPayloadHash, _batchPayload, orderId, beneficiary, maxReward, actionType);
         }
@@ -216,11 +224,14 @@ contract ClaimerGMPV2 is AccessControlUpgradeable {
     ) public view returns (bool) {
         bytes32 paymentPayloadHash = keccak256(abi.encode(rewardAsset, maxReward, orderTimestamp));
         bytes32 calculatedWithdrawHash = paymentPayloadHash;
-        if (settledAmount > 0) {
+        if (!attesters.skipEscrowWrites()) {
+            // As per the escrowGMP commitRemoteBeneficiaryPayload, attesters would commit the order payload with beneficiary address
+            calculatedWithdrawHash = keccak256(abi.encode(paymentPayloadHash, beneficiary));
+        } else if (settledAmount > 0 && !attesters.skipEscrowWrites()) {
+            // As per the escrowGMP commitRemoteBeneficiaryPayload, attesters would commit the order payload with settled amount
             calculatedWithdrawHash = keccak256(abi.encode(rewardAsset, settledAmount, beneficiary));
         }
-        bytes32 paymentHash = escrowGMP.getRemotePaymentPayloadHash(orderId);
-        return paymentHash == calculatedWithdrawHash;
+        return escrowGMP.getRemotePaymentPayloadHash(orderId) == calculatedWithdrawHash;
     }
 
     function checkIsClaimable(
@@ -240,32 +251,11 @@ contract ClaimerGMPV2 is AccessControlUpgradeable {
         if (paymentHash == bytes32(0) || paymentHash == bytes32(uint256(1)) || paymentHash == bytes32(uint256(2))) {
             return false;
         }
-        bytes32 calculatedWithdrawHash = keccak256(abi.encode(rewardAsset, maxReward, orderTimestamp));
-        bytes32 calculatedWithdrawHashCommitted = keccak256(abi.encode(calculatedWithdrawHash, beneficiary));
-        if (settledAmount > 0) {
-            calculatedWithdrawHashCommitted = keccak256(abi.encode(calculatedWithdrawHash, beneficiary, settledAmount));
-        }
-        if (
-            calculatedWithdrawHashCommitted == paymentHash ||
-            keccak256(abi.encode(calculatedWithdrawHashCommitted, beneficiary)) == paymentHash ||
-            keccak256(abi.encode(keccak256(abi.encode(calculatedWithdrawHashCommitted, beneficiary)), beneficiary)) ==
-            paymentHash ||
-            keccak256(
-                abi.encode(
-                    keccak256(
-                        abi.encode(keccak256(abi.encode(calculatedWithdrawHashCommitted, beneficiary)), beneficiary)
-                    ),
-                    beneficiary
-                )
-            ) ==
-            paymentHash
-        ) {
-            return true;
-        }
-        if (attesters.skipEscrowWrites() || forceCheckV2) {
-            if (paymentHash != calculatedWithdrawHash || paymentHash == bytes32(0)) {
-                return false;
-            }
+        require(
+            checkIsClaimableWithEscrow(orderId, rewardAsset, maxReward, settledAmount, beneficiary, orderTimestamp),
+            "RO#14"
+        );
+        if (forceCheckV2) {
             uint8 actionType = 0;
             return isClaimable(_batchPayloadHash, _batchPayload, orderId, beneficiary, settledAmount, actionType);
         }

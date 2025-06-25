@@ -900,6 +900,9 @@ describe('RemoteOrder', function () {
 
       const protocolFeeAddOn = BigNumber.from('1000').mul(params.maxRewardETH).div('1000000000').add('1000')
 
+      // Attesters contract skip escrow writes
+      await attestersContract.connect(owner).setSkipEscrowWrites(true)
+
       const orderTx = await contract
         .connect(addr1)
         .order(
