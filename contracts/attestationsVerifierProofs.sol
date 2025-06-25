@@ -49,22 +49,12 @@ contract AttestationsVerifierProofs is AccessControlUpgradeable, EIP712Verifier 
         uint32 index;
     }
 
-    event SignerEmitted(address indexed signer);
-    event TestEvent(bool, bool, bytes32[] leaves, address[] addressesRecovered, bytes32);
     event BatchApplied(bytes32 indexed batchHash, address indexed executor, bytes32 indexed attestingCommitteeHash);
     event BatchProcessingError(bytes32 indexed batchHash, address indexed executor, uint32 indexed batchIndex);
     event AlreadyApplied(bytes32 indexed committmentMessageHash);
-    event CommitmentApplied(
-        bytes32 indexed batchHash,
-        address indexed executor,
-        bytes32 indexed attestingCommitteeHash
-    );
     event TransferCommitApplied(bytes32 indexed sfxId, address indexed executor);
     event TransferRevertApplied(bytes32 indexed sfxId);
     event EscrowCommitApplied(bytes32 indexed sfxId, address indexed executor);
-    event CallCommitApplied(bytes32 indexed sfxId);
-    event CallRevertApplied(bytes32 indexed sfxId);
-    event SignerNotInCommittee(address indexed signer);
 
     /// @dev Constructor function for this upgradeable contract
     /// @param  _owner  The owner of the contract, as well as the proxy
