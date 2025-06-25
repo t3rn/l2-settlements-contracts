@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.24;
 
-import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "./EIP712Verifier.sol";
+import "./escrowGMP.sol";
+import "./remoteOrder.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "./escrowGMP.sol";
-import "./remoteOrder.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
-contract AttestationsVerifierProofs is AccessControlUpgradeable {
+contract AttestationsVerifierProofs is AccessControlUpgradeable, EIP712Verifier {
     using SafeERC20 for IERC20;
     using MerkleProof for bytes[];
 
@@ -299,7 +300,7 @@ contract AttestationsVerifierProofs is AccessControlUpgradeable {
         bytes32 expectedBatchHash,
         bytes[] calldata signatures,
         address[] memory bannedCommittee
-    ) public pure returns (bytes32[] memory) {
+    ) public view returns (bytes32[] memory) {
         bytes32[] memory leaves = new bytes32[](signatures.length);
         uint256 uniqueCount = 0;
         for (uint256 i = 0; i < signatures.length; ++i) {
@@ -407,30 +408,8 @@ contract AttestationsVerifierProofs is AccessControlUpgradeable {
         return false;
     }
 
-    function recoverSigner(bytes32 _messageHash, bytes memory signature) public pure returns (address) {
-        bytes32 r;
-        bytes32 s;
-        uint8 v;
-
-        if (signature.length != 65) {
-            return address(0);
-        }
-
-        assembly {
-            r := mload(add(signature, 32))
-            s := mload(add(signature, 64))
-            v := byte(0, mload(add(signature, 96)))
-        }
-
-        if (v < 27) {
-            v += 27;
-        }
-
-        if (v != 27 && v != 28) {
-            return address(0);
-        } else {
-            bytes32 prefixedHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _messageHash));
-            return ecrecover(prefixedHash, v, r, s);
-        }
+    function recoverSigner(bytes32 structHash, bytes memory signature) public view returns (address) {
+        bytes32 digest = _hashTypedData(structHash);
+        return _recoverSignerFromDigest(digest, signature);
     }
 }
