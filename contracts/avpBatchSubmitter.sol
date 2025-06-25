@@ -146,13 +146,16 @@ contract avpBatchSubmitter is AccessControlUpgradeable {
             bytes32 confirmationId = keccak256(
                 abi.encode(entries.ids[i], entries.targets[i], entries.amounts[i], entries.assets[i], msg.sender)
             );
-
+            bytes32 orderConfirmationId = keccak256(
+                abi.encode(entries.ids[i], entries.targets[i], entries.amounts[i], entries.assets[i])
+            );
             // Check if the order is already confirmed
-            if (ro.orderPayloads(confirmationId) != bytes32(0)) {
+            if (ro.orderPayloads(confirmationId) != bytes32(0) || ro.orderPayloads(orderConfirmationId) != bytes32(0)) {
                 continue;
             }
 
             ro.markOrderPayload(confirmationId, entries.ids[i]);
+            ro.markOrderPayload(orderConfirmationId, entries.ids[i]);
 
             // Try to find an existing batch entry with the same target and asset
             bool found = false;
