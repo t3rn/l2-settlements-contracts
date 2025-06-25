@@ -98,6 +98,11 @@ contract BRN2TRN is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
         require(distribute(msg.sender, trnAmount), "Distribution failed");
     }
 
+    function addWhitelistedAddress(address _address, bool _isWhitelisted) public onlyOwner {
+        require(_address != address(0), "Invalid address: zero address");
+        whitelistedAddresses[_address] = _isWhitelisted;
+    }
+
     function distribute(address to, uint256 amount) internal nonReentrant returns (bool) {
         if (to == address(0)) {
             emit DistributionAttempt(to, amount, false, "Invalid address: zero address");
