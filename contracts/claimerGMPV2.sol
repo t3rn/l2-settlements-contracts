@@ -261,49 +261,4 @@ contract ClaimerGMPV2 is AccessControlUpgradeable {
         }
         return false;
     }
-
-    function checkClaimPayoutBatch(
-        RemoteOrder.Payout[] memory payouts,
-        bytes32 _batchPayloadHash,
-        bytes memory _batchPayload
-    ) public returns (address[] memory, uint256[] memory, uint256) {
-        address[] memory rewardAssets = new address[](payouts.length);
-        uint256[] memory rewardAmounts = new uint256[](payouts.length);
-        uint256 rewardAssetCount = 0;
-        for (uint256 i = 0; i < payouts.length; ++i) {
-            require(
-                checkIsClaimable(
-                    payouts[i].id,
-                    payouts[i].rewardAsset,
-                    payouts[i].maxReward,
-                    payouts[i].settledAmount,
-                    msg.sender,
-                    payouts[i].orderTimestamp,
-                    _batchPayloadHash,
-                    _batchPayload
-                ),
-                "RO#15"
-            );
-            require(escrowGMP.getRemotePaymentPayloadHash(payouts[i].id) != bytes32(0), "RO#15");
-            escrowGMP.oneifyPayloadHash(payouts[i].id);
-
-            bool found = false;
-            for (uint256 j = 0; j < rewardAssetCount; ++j) {
-                if (rewardAssets[j] == payouts[i].rewardAsset) {
-                    rewardAmounts[j] += payouts[i].settledAmount > 0 ? payouts[i].settledAmount : payouts[i].maxReward;
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                rewardAssets[rewardAssetCount] = payouts[i].rewardAsset;
-                rewardAmounts[rewardAssetCount] = payouts[i].settledAmount > 0
-                    ? payouts[i].settledAmount
-                    : payouts[i].maxReward;
-                rewardAssetCount++;
-            }
-        }
-
-        return (rewardAssets, rewardAmounts, rewardAssetCount);
-    }
 }
