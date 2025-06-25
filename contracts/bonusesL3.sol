@@ -128,9 +128,7 @@ contract BonusesL3 is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
 
         uint256 currentWeeklyTarget = readWeeklyTarget();
         uint256 currentWeeklySupply = leftThisWeek;
-        uint256 weekElapsed = (currentWeekStartDate + 1 weeks) - block.timestamp;
-
-        // Ensure at least some time remains
+        uint256 weekElapsed = block.timestamp - currentWeekStartDate;
 
         // Adjust reward scale based on how much time has passed
         uint256 timeFactor = (weekElapsed * 100) / 1 weeks; // Percentage of the week elapsed (0-100%)
