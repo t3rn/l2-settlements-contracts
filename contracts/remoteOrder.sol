@@ -319,9 +319,7 @@ contract RemoteOrder is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
             revert("RO#2");
         }
 
-        if (asset == address(0)) {
-            require(msg.value == amount, "RO#2");
-        }
+        require(msg.value == (asset == address(0) ? amount : 0), "RO#2");
 
         if (id != generateIdFull(sourceAccount, nonce, source)) {
             revert("RO#7");
