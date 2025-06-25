@@ -180,21 +180,27 @@ contract BonusesL3 is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
         address beneficiary
     ) external onlyAuthorizedContract returns (bool) {
         checkResetCurrentPeriod();
+        _updateAssetAverage(assetId, amount);
+
+        if (leftThisWeek == 0 || !isOn()) {
+            return false; // No rewards available or contract is halted
+        }
+
         uint256 reward = readCurrentBaseReward();
         uint256 bonus = _applyBonus(assetId, reward, amount);
         uint256 finalReward = reward + bonus;
-        if (finalReward < leftThisWeek) {
-            leftThisWeek -= finalReward;
-        } else {
-            return false; // Not enough balance left for this reward
+        if (finalReward > leftThisWeek) {
+            finalReward = leftThisWeek;
         }
-        _updateAssetAverage(assetId, amount);
 
         // Distribute the reward
         bool distributed = distribute(beneficiary, finalReward);
         if (!distributed) {
             return false;
         }
+
+        leftThisWeek -= finalReward;
+
         emit BonusApplied(beneficiary, assetId, reward, bonus, finalReward);
 
         return distributed;
