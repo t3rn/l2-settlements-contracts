@@ -1,176 +1,173 @@
 const { expect } = require('chai')
-const { ethers } = require('hardhat')
+const { ethers, upgrades } = require('hardhat')
 
-describe('VestingFactory Contract - 18mo vest', function () {
-  let VestingFactory
-  let vestingFactory
-  let owner
-  let beneficiary
-  let beneficiary1
-  let beneficiary2
-  let beneficiary3
+describe('VestingFactory Contract', function () {
+  let VestingFactory, vestingFactory
+  let CustomVestingWallet
+  let implementation
+  let owner, beneficiary, beneficiary1, beneficiary2, beneficiary3
   let token
   let start
-  const amount = ethers.utils.parseEther('1000') // 1000 tokens
+  const amount = ethers.utils.parseEther('1000')
 
-  beforeEach(async function () {
-    ;[owner, beneficiary, beneficiary1, beneficiary2, beneficiary3] = await ethers.getSigners()
+  describe('18mo vesting', function () {
+    beforeEach(async function () {
+      ;[owner, beneficiary, beneficiary1, beneficiary2, beneficiary3] = await ethers.getSigners()
 
-    // Deploy your ERC20 token
-    const Token = await ethers.getContractFactory('TRN')
-    token = await Token.deploy(owner.address, 'TRN', 'TRN')
-    await token.deployed()
+      const Token = await ethers.getContractFactory('TRN')
+      token = await Token.deploy(owner.address, 'TRN', 'TRN')
+      await token.deployed()
+      await token.mint(owner.address, ethers.utils.parseEther('100000000'))
 
-    // Mint tokens to the VestingFactory
-    await token.mint(owner.address, ethers.utils.parseEther('100000000'))
+      const latest = await ethers.provider.getBlock('latest')
+      start = latest.timestamp
 
-    // Record the start time
-    const latest = await ethers.provider.getBlock('latest')
-    const start = latest.timestamp
+      VestingFactory = await ethers.getContractFactory('VestingFactory')
+      vestingFactory = await upgrades.deployProxy(VestingFactory, [token.address, start, owner.address], {
+        initializer: 'initialize',
+      })
+      await vestingFactory.deployed()
 
-    // Deploy VestingFactory
-    VestingFactory = await ethers.getContractFactory('VestingFactory')
-    VestingFactory.connect(owner)
-    // // Use proxy to deploy the contract
-    vestingFactory = await upgrades.deployProxy(VestingFactory, [token.address, start, owner.address], {
-      initializer: 'initialize',
+      CustomVestingWallet = await ethers.getContractFactory('CustomVestingWallet')
+      implementation = await CustomVestingWallet.deploy()
+      await implementation.deployed()
+
+      await vestingFactory.setVestingWalletImplementation(implementation.address)
+      await token.connect(owner).approve(vestingFactory.address, ethers.utils.parseEther('1000'))
     })
-    await vestingFactory.deployed()
 
-    // Approve the VestingFactory to spend tokens
-    await token.connect(owner).approve(vestingFactory.address, ethers.utils.parseEther('1000'))
-    // get current hre time
-    const block = await ethers.provider.getBlock('latest')
-    now = block.timestamp
-  })
-
-  it('should assign tokens for 18mo vesting', async function () {
-    // Check owner's balance
-    expect(await token.balanceOf(owner.address)).to.equal(ethers.utils.parseEther('100000000'))
-    // Transfer amount of tokens to the VestingFactory
-    await token.connect(owner).transfer(vestingFactory.address, amount)
-    await vestingFactory.connect(owner).createVestingWallet18Months(beneficiary.address, amount)
-    expect(await token.balanceOf(vestingFactory.address)).to.equal(0)
-  })
-
-  it('should not override vesting wallet of the same beneficiary', async function () {
-    // Check owner's balance
-    expect(await token.balanceOf(owner.address)).to.equal(ethers.utils.parseEther('100000000'))
-    // Transfer amount of tokens to the VestingFactory
-    await token.connect(owner).transfer(vestingFactory.address, amount)
-    await vestingFactory.connect(owner).createVestingWallet18Months(beneficiary.address, amount)
-    expect(await token.balanceOf(vestingFactory.address)).to.equal(0)
-    expect(vestingFactory.connect(owner).createVestingWallet18Months(beneficiary.address, amount)).to.be.revertedWith(
-      'Vesting wallet already exists for this beneficiary',
-    )
-  })
-
-  it('should withdraw the correct amount after 1 month on 18mo vesting', async function () {
-    const initialBalance = await token.balanceOf(beneficiary.address)
-    // Check the beneficiary's balance - should be 0
-    expect(await token.balanceOf(beneficiary.address)).to.be.eq(ethers.utils.parseEther('0'))
-
-    // Transfer amount of tokens to the VestingFactory
-    await token.connect(owner).transfer(vestingFactory.address, amount)
-    await vestingFactory.connect(owner).createVestingWallet18Months(beneficiary.address, amount)
-    expect(await token.balanceOf(vestingFactory.address)).to.equal(0)
-
-    // Increase time by 1 month
-    await ethers.provider.send('evm_increaseTime', [30 * 24 * 60 * 60]) // 30 days
-    // await ethers.provider.send('evm_setNextBlockTimestamp', [now + 30 * 24 * 60 * 60])
-    await ethers.provider.send('evm_mine')
-
-    // Calculate expected vested amount (1/18th for 18 months vesting)
-    const expectedVestedAmount = amount.div(18)
-
-    // Get the vesting wallet address (assuming it's the first one created)
-    const vestingWalletAddress = await vestingFactory.vestingWallets(beneficiary.address)
-
-    // Check how many of tokens are releasable
-    const releasableAmount = await vestingFactory.releasable(beneficiary.address, token.address)
-
-    const _releaseTx = await vestingFactory.connect(beneficiary).release(token.address)
-
-    // Check the beneficiary's balance
-    expect(await token.balanceOf(beneficiary.address)).to.be.closeTo(
-      expectedVestedAmount.sub(initialBalance),
-      ethers.utils.parseEther('0.1'),
-    )
-  })
-})
-
-describe('VestingFactory Contract - 24mo vest', function () {
-  let VestingFactory
-  let vestingFactory
-  let owner
-  let beneficiary
-  let token
-  let start
-  const amount = ethers.utils.parseEther('1000') // 1000 tokens
-
-  beforeEach(async function () {
-    ;[owner, beneficiary] = await ethers.getSigners()
-
-    // Deploy your ERC20 token
-    const Token = await ethers.getContractFactory('TRN')
-    token = await Token.deploy(owner.address, 'TRN', 'TRN')
-    await token.deployed()
-
-    // Mint tokens to the VestingFactory
-    await token.mint(owner.address, ethers.utils.parseEther('100000000'))
-    // Record the start time
-    const latest = await ethers.provider.getBlock('latest')
-    const start = latest.timestamp
-
-    // Deploy VestingFactory
-    VestingFactory = await ethers.getContractFactory('VestingFactory')
-    VestingFactory.connect(owner)
-    // // Use proxy to deploy the contract
-    vestingFactory = await upgrades.deployProxy(VestingFactory, [token.address, start, owner.address], {
-      initializer: 'initialize',
+    it('should assign tokens for 18mo vesting', async function () {
+      expect(await token.balanceOf(owner.address)).to.equal(ethers.utils.parseEther('100000000'))
+      await token.connect(owner).transfer(vestingFactory.address, amount)
+      await vestingFactory.connect(owner).createVestingWallet18Months(beneficiary.address, amount)
+      expect(await token.balanceOf(vestingFactory.address)).to.equal(0)
     })
-    await vestingFactory.deployed()
 
-    // Approve the VestingFactory to spend tokens
-    await token.connect(owner).approve(vestingFactory.address, ethers.utils.parseEther('1000'))
+    it('should not override vesting wallet of the same beneficiary', async function () {
+      await token.connect(owner).transfer(vestingFactory.address, amount)
+      await vestingFactory.connect(owner).createVestingWallet18Months(beneficiary.address, amount)
+      await expect(
+        vestingFactory.connect(owner).createVestingWallet18Months(beneficiary.address, amount),
+      ).to.be.revertedWith('Vesting wallet already exists')
+    })
+
+    it('should withdraw the correct amount after 1 month on 18mo vesting', async function () {
+      await token.connect(owner).transfer(vestingFactory.address, amount)
+      await vestingFactory.connect(owner).createVestingWallet18Months(beneficiary.address, amount)
+
+      await ethers.provider.send('evm_increaseTime', [30 * 24 * 60 * 60])
+      await ethers.provider.send('evm_mine')
+
+      const expectedVestedAmount = amount.div(18)
+      await vestingFactory.connect(beneficiary).release(token.address)
+
+      const actualBalance = await token.balanceOf(beneficiary.address)
+      expect(actualBalance).to.be.closeTo(expectedVestedAmount, ethers.utils.parseEther('0.1'))
+    })
   })
 
-  it('should assign tokens for 24mo vesting', async function () {
-    // Check owner's balance
-    expect(await token.balanceOf(owner.address)).to.equal(ethers.utils.parseEther('100000000'))
-    // Transfer amount of tokens to the VestingFactory
-    await token.connect(owner).transfer(vestingFactory.address, amount)
-    await vestingFactory.connect(owner).createVestingWallet24Months(beneficiary.address, amount)
-    expect(await token.balanceOf(vestingFactory.address)).to.equal(0)
+  describe('24mo vesting', function () {
+    beforeEach(async function () {
+      ;[owner, beneficiary] = await ethers.getSigners()
+
+      const Token = await ethers.getContractFactory('TRN')
+      token = await Token.deploy(owner.address, 'TRN', 'TRN')
+      await token.deployed()
+      await token.mint(owner.address, ethers.utils.parseEther('100000000'))
+
+      const latest = await ethers.provider.getBlock('latest')
+      start = latest.timestamp
+
+      VestingFactory = await ethers.getContractFactory('VestingFactory')
+      vestingFactory = await upgrades.deployProxy(VestingFactory, [token.address, start, owner.address], {
+        initializer: 'initialize',
+      })
+      await vestingFactory.deployed()
+
+      CustomVestingWallet = await ethers.getContractFactory('CustomVestingWallet')
+      implementation = await CustomVestingWallet.deploy()
+      await implementation.deployed()
+
+      await vestingFactory.setVestingWalletImplementation(implementation.address)
+      await token.connect(owner).approve(vestingFactory.address, ethers.utils.parseEther('1000'))
+    })
+
+    it('should assign tokens for 24mo vesting', async function () {
+      await token.connect(owner).transfer(vestingFactory.address, amount)
+      await vestingFactory.connect(owner).createVestingWallet24Months(beneficiary.address, amount)
+      expect(await token.balanceOf(vestingFactory.address)).to.equal(0)
+    })
+
+    it('should withdraw the correct amount after 1 month on 24mo vesting', async function () {
+      await token.connect(owner).transfer(vestingFactory.address, amount)
+      await vestingFactory.connect(owner).createVestingWallet24Months(beneficiary.address, amount)
+
+      await ethers.provider.send('evm_increaseTime', [30 * 24 * 60 * 60])
+      await ethers.provider.send('evm_mine')
+
+      const expectedVestedAmount = amount.div(24)
+      await vestingFactory.connect(beneficiary).release(token.address)
+
+      const actualBalance = await token.balanceOf(beneficiary.address)
+      expect(actualBalance).to.be.closeTo(expectedVestedAmount, ethers.utils.parseEther('0.1'))
+    })
   })
 
-  it('should withdraw the correct amount after 1 month on 24mo vesting', async function () {
-    // Check the beneficiary's balance - should be 0
-    expect(await token.balanceOf(beneficiary.address)).to.be.eq(ethers.utils.parseEther('0'))
+  describe('VestingFactory internals', function () {
+    beforeEach(async () => {
+      ;[owner, beneficiary1, beneficiary2] = await ethers.getSigners()
 
-    // Transfer amount of tokens to the VestingFactory
-    await token.connect(owner).transfer(vestingFactory.address, amount)
-    await vestingFactory.connect(owner).createVestingWallet24Months(beneficiary.address, amount)
-    expect(await token.balanceOf(vestingFactory.address)).to.equal(0)
+      const Token = await ethers.getContractFactory('TRN')
+      token = await Token.deploy(owner.address, 'TRN', 'TRN')
+      await token.deployed()
+      await token.mint(owner.address, ethers.utils.parseEther('100000000'))
 
-    // Increase time by 1 month
-    await ethers.provider.send('evm_increaseTime', [30 * 24 * 60 * 60]) // 30 days
-    await ethers.provider.send('evm_mine')
+      const latest = await ethers.provider.getBlock('latest')
+      start = latest.timestamp
 
-    // Calculate expected vested amount (1/24th for 24 months vesting)
-    const expectedVestedAmount = amount.div(24).mul(1) // 1 months passed
-    // Get the vesting wallet address (assuming it's the first one created)
-    const vestingWalletAddress = await vestingFactory.vestingWallets(beneficiary.address)
+      VestingFactory = await ethers.getContractFactory('VestingFactory')
+      vestingFactory = await upgrades.deployProxy(VestingFactory, [token.address, start, owner.address], {
+        initializer: 'initialize',
+      })
+      await vestingFactory.deployed()
 
-    // Check how many of tokens are releasable
-    const releasableAmount = await vestingFactory.releasable(beneficiary.address, token.address)
+      CustomVestingWallet = await ethers.getContractFactory('CustomVestingWallet')
+      implementation = await CustomVestingWallet.deploy()
+      await implementation.deployed()
+      await vestingFactory.setVestingWalletImplementation(implementation.address)
 
-    const _releaseTx = await vestingFactory.connect(beneficiary).release(token.address)
+      await token.transfer(vestingFactory.address, amount.mul(2))
+    })
 
-    // Check the beneficiary's balance
-    expect(await token.balanceOf(beneficiary.address)).to.be.closeTo(
-      expectedVestedAmount,
-      ethers.utils.parseEther('0.1'),
-    )
+    it('should reuse the same implementation for multiple vesting wallets', async () => {
+      await vestingFactory.connect(owner).createVestingWallet18Months(beneficiary1.address, amount)
+      await vestingFactory.connect(owner).createVestingWallet18Months(beneficiary2.address, amount)
+
+      const impl = await vestingFactory.vestingWalletImplementation()
+      const wallet1 = await vestingFactory.vestingWallets(beneficiary1.address)
+      const wallet2 = await vestingFactory.vestingWallets(beneficiary2.address)
+
+      expect(wallet1).to.not.equal(wallet2)
+      expect(wallet1).to.not.equal(impl)
+    })
+
+    it('should revert if trying to set implementation again', async () => {
+      const newImpl = await CustomVestingWallet.deploy()
+      await newImpl.deployed()
+
+      await expect(vestingFactory.setVestingWalletImplementation(newImpl.address)).to.be.revertedWith(
+        'Implementation already set',
+      )
+    })
+
+    it('should initialize clone with correct beneficiary, start, and duration', async () => {
+      await vestingFactory.connect(owner).createVestingWallet18Months(beneficiary1.address, amount)
+      const walletAddr = await vestingFactory.vestingWallets(beneficiary1.address)
+      const vestingWallet = await ethers.getContractAt('CustomVestingWallet', walletAddr)
+
+      expect(await vestingWallet.beneficiary()).to.equal(beneficiary1.address)
+      expect(await vestingWallet.start()).to.equal(start)
+      expect(await vestingWallet.duration()).to.equal(18 * 30 * 24 * 60 * 60)
+    })
   })
 })

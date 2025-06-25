@@ -4,8 +4,8 @@ pragma solidity 0.8.24;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts-upgradeable/finance/VestingWalletUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 contract CustomVestingWallet is Initializable, VestingWalletUpgradeable {
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -14,7 +14,7 @@ contract CustomVestingWallet is Initializable, VestingWalletUpgradeable {
     }
 
     function initialize(address beneficiary, uint64 startTimestamp, uint64 durationSeconds) public initializer {
-        VestingWalletUpgradeable.__VestingWallet_init(beneficiary, startTimestamp, durationSeconds);
+        __VestingWallet_init(beneficiary, startTimestamp, durationSeconds);
     }
 
     function release(address _token) public override {
@@ -29,10 +29,13 @@ contract CustomVestingWallet is Initializable, VestingWalletUpgradeable {
 contract VestingFactory is AccessControlUpgradeable {
     ERC20 private token;
     uint64 public startDate;
+
+    address public vestingWalletImplementation;
+
     mapping(address => address) public vestingWallets;
 
-    uint64 public constant VESTING_DURATION_18_MONTHS = 18 * 30 days; // 18 months
-    uint64 public constant VESTING_DURATION_24_MONTHS = 24 * 30 days; // 24 months
+    uint64 public constant VESTING_DURATION_18_MONTHS = 18 * 30 days;
+    uint64 public constant VESTING_DURATION_24_MONTHS = 24 * 30 days;
 
     bytes32 public version;
 
@@ -53,27 +56,39 @@ contract VestingFactory is AccessControlUpgradeable {
         token = _token;
     }
 
-    function setVersion(bytes32 _version) public onlyOwner {
-        version = _version;
+    /// Deploy the implementation contract once and store its address
+    function deployVestingImplementation() external onlyOwner {
+        require(vestingWalletImplementation == address(0), "Implementation already deployed");
+        vestingWalletImplementation = address(new CustomVestingWallet());
+    }
+
+    function setVestingWalletImplementation(address _impl) external onlyOwner {
+        require(_impl != address(0), "Invalid address");
+        require(vestingWalletImplementation == address(0), "Implementation already set");
+        vestingWalletImplementation = _impl;
     }
 
     function createVestingWallet18Months(address beneficiary, uint256 amount) public onlyOwner {
         require(amount > 0, "Amount must be greater than 0");
-        require(vestingWallets[beneficiary] == address(0), "Vesting wallet already exists for this beneficiary");
+        require(vestingWallets[beneficiary] == address(0), "Vesting wallet already exists");
+        require(vestingWalletImplementation != address(0), "Implementation not set");
 
-        address clone = Clones.clone(address(new CustomVestingWallet()));
+        address clone = Clones.clone(vestingWalletImplementation);
         CustomVestingWallet(payable(clone)).initialize(beneficiary, startDate, VESTING_DURATION_18_MONTHS);
         vestingWallets[beneficiary] = clone;
+
         require(token.transfer(clone, amount), "Token transfer failed");
     }
 
     function createVestingWallet24Months(address beneficiary, uint256 amount) public onlyOwner {
         require(amount > 0, "Amount must be greater than 0");
-        require(vestingWallets[beneficiary] == address(0), "Vesting wallet already exists for this beneficiary");
+        require(vestingWallets[beneficiary] == address(0), "Vesting wallet already exists");
+        require(vestingWalletImplementation != address(0), "Implementation not set");
 
-        address clone = Clones.clone(address(new CustomVestingWallet()));
+        address clone = Clones.clone(vestingWalletImplementation);
         CustomVestingWallet(payable(clone)).initialize(beneficiary, startDate, VESTING_DURATION_24_MONTHS);
         vestingWallets[beneficiary] = clone;
+
         require(token.transfer(clone, amount), "Token transfer failed");
     }
 
