@@ -94,8 +94,8 @@ contract BRN2TRN is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
         uint256 trnAmount = balance / ratio;
         // Burn BRN
         BRNToken.transferFrom(msg.sender, burntAddress, balance);
-        // Distribute TRN via
-        distribute(msg.sender, trnAmount);
+        // Distribute TRN via distribute function
+        require(distribute(msg.sender, trnAmount), "Distribution failed");
     }
 
     function distribute(address to, uint256 amount) internal nonReentrant returns (bool) {
