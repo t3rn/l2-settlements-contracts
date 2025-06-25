@@ -196,7 +196,7 @@ contract avpBatchSubmitter is AccessControlUpgradeable {
         for (uint256 i = 0; i < batchCount; i++) {
             uint256 gasStartBatch = gasleft();
             BatchData memory batch = batchData[i];
-            ro.settlePayoutWithFeesCall{value: batch.totalAmount}(
+            ro.settlePayoutWithFeesCall{value: batch.asset == address(0) ? batch.totalAmount : 0}(
                 batch.totalAmount,
                 batch.asset,
                 batch.target,
