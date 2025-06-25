@@ -98,7 +98,7 @@ contract TRNInflation is AccessControlUpgradeable {
         // Duration passed since the last update in weeks
         uint256 weeksPassed = (block.timestamp - lastInflationTime) / WEEKLY_INFLATION_INTERVAL;
 
-        require(weeksPassed > 1, "Disallow repeated distributions");
+        require(weeksPassed >= 1, "Disallow repeated distributions");
 
         // Calculate inflation for each recipient
         uint256 inflationToDistribute = totalInflationThisWeek * weeksPassed;
