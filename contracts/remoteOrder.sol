@@ -342,10 +342,6 @@ contract RemoteOrder is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
         orderPayloads[confirmationId] = id;
         orderPayloads[orderConfirmationId] = id;
 
-        if (asset == address(0)) {
-            require(msg.value == amount, "RO#2");
-        }
-
         require(settleNativeOrToken(amount, asset, target, msg.sender), "RO#2");
 
         emit Confirmation(id, target, amount, asset, msg.sender, confirmationId, block.timestamp);
