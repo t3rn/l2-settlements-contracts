@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract BRN is ERC20, Ownable {
-
     constructor(address _owner, string memory name, string memory symbol) ERC20(name, symbol) {
         // Prevent fat fingers
         require(_owner != address(0), "Owner address cannot be zero");

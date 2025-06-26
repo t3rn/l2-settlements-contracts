@@ -68,6 +68,8 @@ contract BRN2TRN is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
     }
 
     function setRatio(uint256 _ratio) public onlyOwner {
+        // Require ratio to be greater than 0
+        require(_ratio > 0, "ratio = 0");
         BRN2TRNRatio = _ratio;
     }
 
