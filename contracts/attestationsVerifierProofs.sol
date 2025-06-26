@@ -325,9 +325,6 @@ contract AttestationsVerifierProofs is AccessControlUpgradeable, EIP712Verifier 
         TransferCommit,
         TransferRevert,
         EscrowCommitApplied,
-        Mint,
-        CallCommit,
-        CircuitHeaderEncoded,
         TransferCommitOpenMarket
     }
 

@@ -12,8 +12,12 @@ import "./attestationsVerifierProofs.sol";
 import "./escrowGMP.sol";
 import "./openMarketPricer.sol";
 
-//import "hardhat/console.sol";
-
+enum OperationType {
+    TransferCommit,
+    TransferRevert,
+    EscrowCommitApplied,
+    TransferCommitOpenMarket
+}
 contract ClaimerGMPV2 is AccessControlUpgradeable {
     AttestationsVerifierProofs public attesters;
     EscrowGMP public escrowGMP;
@@ -72,7 +76,10 @@ contract ClaimerGMPV2 is AccessControlUpgradeable {
             uint8 actionType = uint8(payload[offset]);
             offset += 1;
             // If escrow commit action
-            if (actionType == 0) {
+            if (
+                actionType == uint8(OperationType.TransferCommit) ||
+                actionType == uint8(OperationType.EscrowCommitApplied)
+            ) {
                 // Assume next 32 bytes to be order id
                 bytes32 orderId = bytes32(payload[offset:offset + 32]);
                 offset += 32;
@@ -84,7 +91,7 @@ contract ClaimerGMPV2 is AccessControlUpgradeable {
                 }
             }
             // If escrow revert action
-            else if (actionType == 1) {
+            else if (actionType == uint8(OperationType.TransferRevert)) {
                 // Assume next 32 bytes to be order id
                 bytes32 orderId = bytes32(payload[offset:offset + 32]);
                 offset += 32;
@@ -93,7 +100,7 @@ contract ClaimerGMPV2 is AccessControlUpgradeable {
                 }
             }
             // If Open-Market commit action
-            else if (actionType == 5) {
+            else if (actionType == uint8(OperationType.TransferCommitOpenMarket)) {
                 // Assume next 32 bytes to be order id
                 bytes32 orderId = bytes32(payload[offset:offset + 32]);
                 offset += 32;
